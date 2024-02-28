@@ -16,12 +16,36 @@
 
 package com.xayah.core.ui.material3
 
+import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import com.xayah.core.datastore.readMonet
 import com.xayah.core.ui.material3.tokens.ColorSchemeKeyTokens
+import com.xayah.core.ui.theme.Blue10
+import com.xayah.core.ui.theme.Blue20
+import com.xayah.core.ui.theme.Blue30
+import com.xayah.core.ui.theme.Blue40
+import com.xayah.core.ui.theme.Blue80
+import com.xayah.core.ui.theme.Blue90
+import com.xayah.core.ui.theme.Green10
+import com.xayah.core.ui.theme.Green20
+import com.xayah.core.ui.theme.Green30
+import com.xayah.core.ui.theme.Green40
+import com.xayah.core.ui.theme.Green80
+import com.xayah.core.ui.theme.Green90
+import com.xayah.core.ui.theme.Yellow10
+import com.xayah.core.ui.theme.Yellow20
+import com.xayah.core.ui.theme.Yellow30
+import com.xayah.core.ui.theme.Yellow40
+import com.xayah.core.ui.theme.Yellow80
+import com.xayah.core.ui.theme.Yellow90
 
 /**
  * Helper function for component color tokens. Here is an example on how to use component color
@@ -30,6 +54,12 @@ import com.xayah.core.ui.material3.tokens.ColorSchemeKeyTokens
  */
 @Composable
 internal fun ColorScheme.fromToken(value: ColorSchemeKeyTokens): Color {
+    val context = LocalContext.current
+    // Dynamic color is available on Android 12+
+    val dynamicColor by context.readMonet().collectAsState(initial = true)
+    val isDarkTheme = isSystemInDarkTheme()
+    val tonalPalette = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) dynamicTonalPalette(context) else BaselineTonalPalette
+
     return when (value) {
         ColorSchemeKeyTokens.Transparent -> Color.Transparent
         ColorSchemeKeyTokens.LocalContent -> LocalContentColor.current
@@ -63,6 +93,47 @@ internal fun ColorScheme.fromToken(value: ColorSchemeKeyTokens): Color {
         ColorSchemeKeyTokens.SurfaceVariant -> surfaceVariant
         ColorSchemeKeyTokens.Tertiary -> tertiary
         ColorSchemeKeyTokens.TertiaryContainer -> tertiaryContainer
+
+        ColorSchemeKeyTokens.YellowPrimary -> if (isDarkTheme) Yellow80 else Yellow40
+        ColorSchemeKeyTokens.YellowPrimaryContainer -> if (isDarkTheme) Yellow30 else Yellow90
+        ColorSchemeKeyTokens.YellowOnPrimaryContainer -> if (isDarkTheme) Yellow90 else Yellow10
+        ColorSchemeKeyTokens.BluePrimary -> if (isDarkTheme) Blue80 else Blue40
+        ColorSchemeKeyTokens.BluePrimaryContainer -> if (isDarkTheme) Blue30 else Blue90
+        ColorSchemeKeyTokens.BlueOnPrimaryContainer -> if (isDarkTheme) Blue90 else Blue10
+        ColorSchemeKeyTokens.GreenPrimary -> if (isDarkTheme) Green80 else Green40
+        ColorSchemeKeyTokens.GreenPrimaryContainer -> if (isDarkTheme) Green30 else Green90
+        ColorSchemeKeyTokens.GreenOnPrimaryContainer -> if (isDarkTheme) Green90 else Green10
+
+        ColorSchemeKeyTokens.PrimaryL80D20 -> if (isDarkTheme) tonalPalette.primary20 else tonalPalette.primary80
+        ColorSchemeKeyTokens.SecondaryL80D20 -> if (isDarkTheme) tonalPalette.secondary20 else tonalPalette.secondary80
+        ColorSchemeKeyTokens.TertiaryL80D20 -> if (isDarkTheme) tonalPalette.tertiary20 else tonalPalette.tertiary80
+        ColorSchemeKeyTokens.ErrorL80D20 -> if (isDarkTheme) tonalPalette.error20 else tonalPalette.error80
+        ColorSchemeKeyTokens.YellowL80D20 -> if (isDarkTheme) Yellow20 else Yellow80
+        ColorSchemeKeyTokens.BlueL80D20 -> if (isDarkTheme) Blue20 else Blue80
+        ColorSchemeKeyTokens.GreenL80D20 -> if (isDarkTheme) Green20 else Green80
+
+        ColorSchemeKeyTokens.PrimaryFixed -> if (isDarkTheme) tonalPalette.primary90 else tonalPalette.primary90
+        ColorSchemeKeyTokens.PrimaryFixedDim -> if (isDarkTheme) tonalPalette.primary80 else tonalPalette.primary80
+        ColorSchemeKeyTokens.SecondaryFixed -> if (isDarkTheme) tonalPalette.secondary90 else tonalPalette.secondary90
+        ColorSchemeKeyTokens.SecondaryFixedDim -> if (isDarkTheme) tonalPalette.secondary80 else tonalPalette.secondary80
+        ColorSchemeKeyTokens.TertiaryFixed -> if (isDarkTheme) tonalPalette.tertiary90 else tonalPalette.tertiary90
+        ColorSchemeKeyTokens.TertiaryFixedDim -> if (isDarkTheme) tonalPalette.tertiary80 else tonalPalette.tertiary80
+
+        ColorSchemeKeyTokens.SurfaceBright -> if (isDarkTheme) tonalPalette.neutral24 else tonalPalette.neutral98
+        ColorSchemeKeyTokens.SurfaceContainer -> if (isDarkTheme) tonalPalette.neutral12 else tonalPalette.neutral94
+        ColorSchemeKeyTokens.SurfaceContainerHigh -> if (isDarkTheme) tonalPalette.neutral17 else tonalPalette.neutral92
+        ColorSchemeKeyTokens.SurfaceContainerHighest -> if (isDarkTheme) tonalPalette.neutral22 else tonalPalette.neutral90
+        ColorSchemeKeyTokens.SurfaceContainerLow -> if (isDarkTheme) tonalPalette.neutral10 else tonalPalette.neutral96
+        ColorSchemeKeyTokens.SurfaceContainerLowest -> if (isDarkTheme) tonalPalette.neutral4 else tonalPalette.neutral100
+        ColorSchemeKeyTokens.SurfaceDim -> if (isDarkTheme) tonalPalette.neutral6 else tonalPalette.neutral87
+
+        ColorSchemeKeyTokens.SurfaceBrightBaselineFixed -> if (isDarkTheme) BaselineTonalPalette.neutral24 else BaselineTonalPalette.neutral98
+        ColorSchemeKeyTokens.SurfaceContainerBaselineFixed -> if (isDarkTheme) BaselineTonalPalette.neutral12 else BaselineTonalPalette.neutral94
+        ColorSchemeKeyTokens.SurfaceContainerHighBaselineFixed -> if (isDarkTheme) BaselineTonalPalette.neutral17 else BaselineTonalPalette.neutral92
+        ColorSchemeKeyTokens.SurfaceContainerHighestBaselineFixed -> if (isDarkTheme) BaselineTonalPalette.neutral22 else BaselineTonalPalette.neutral90
+        ColorSchemeKeyTokens.SurfaceContainerLowBaselineFixed -> if (isDarkTheme) BaselineTonalPalette.neutral10 else BaselineTonalPalette.neutral96
+        ColorSchemeKeyTokens.SurfaceContainerLowestBaselineFixed -> if (isDarkTheme) BaselineTonalPalette.neutral4 else BaselineTonalPalette.neutral100
+        ColorSchemeKeyTokens.SurfaceDimBaselineFixed -> if (isDarkTheme) BaselineTonalPalette.neutral6 else BaselineTonalPalette.neutral87
     }
 }
 
