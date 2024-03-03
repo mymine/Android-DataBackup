@@ -203,14 +203,14 @@ public class KXmlParser implements XmlPullParser, Closeable {
             if (cut != -1) {
                 prefix = attrName.substring(0, cut);
                 attrName = attrName.substring(cut + 1);
-            } else if (attrName.equals("xmlns")) {
+            } else if ("xmlns".equals(attrName)) {
                 prefix = attrName;
                 attrName = null;
             } else {
                 continue;
             }
 
-            if (!prefix.equals("xmlns")) {
+            if (!"xmlns".equals(prefix)) {
                 any = true;
             } else {
                 int j = (nspCounts[depth]++) << 1;
@@ -1792,11 +1792,11 @@ public class KXmlParser implements XmlPullParser, Closeable {
     }
 
     public Object getProperty(String property) {
-        if (property.equals(PROPERTY_XMLDECL_VERSION)) {
+        if (PROPERTY_XMLDECL_VERSION.equals(property)) {
             return version;
-        } else if (property.equals(PROPERTY_XMLDECL_STANDALONE)) {
+        } else if (PROPERTY_XMLDECL_STANDALONE.equals(property)) {
             return standalone;
-        } else if (property.equals(PROPERTY_LOCATION)) {
+        } else if (PROPERTY_LOCATION.equals(property)) {
             return location != null ? location : reader.toString();
         } else {
             return null;
@@ -2105,7 +2105,7 @@ public class KXmlParser implements XmlPullParser, Closeable {
     }
 
     public void setProperty(String property, Object value) throws XmlPullParserException {
-        if (property.equals(PROPERTY_LOCATION)) {
+        if (PROPERTY_LOCATION.equals(property)) {
             location = String.valueOf(value);
         } else {
             throw new XmlPullParserException("unsupported property: " + property);
