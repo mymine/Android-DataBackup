@@ -720,9 +720,9 @@ public class SettingsStateApi31 implements SettingsState {
             }
 
             String tagName = parser.getName();
-            if (tagName.equals(TAG_SETTINGS)) {
+            if (TAG_SETTINGS.equals(tagName)) {
                 parseSettingsLocked(parser);
-            } else if (tagName.equals(TAG_NAMESPACE_HASHES)) {
+            } else if (TAG_NAMESPACE_HASHES.equals(tagName)) {
                 parseNamespaceHash(parser);
             }
         }
@@ -743,7 +743,7 @@ public class SettingsStateApi31 implements SettingsState {
             }
 
             String tagName = parser.getName();
-            if (tagName.equals(TAG_SETTING)) {
+            if (TAG_SETTING.equals(tagName)) {
                 String id = parser.getAttributeValue(null, ATTR_ID);
                 String name = parser.getAttributeValue(null, ATTR_NAME);
                 String value = getValueAttribute(parser, ATTR_VALUE, ATTR_VALUE_BASE64);

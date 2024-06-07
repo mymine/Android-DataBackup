@@ -315,7 +315,7 @@ public class FastXmlSerializer implements XmlSerializer {
 
     public void setFeature(String name, boolean state) throws IllegalArgumentException,
             IllegalStateException {
-        if (name.equals("http://xmlpull.org/v1/doc/features.html#indent-output")) {
+        if ("http://xmlpull.org/v1/doc/features.html#indent-output".equals(name)) {
             mIndent = true;
             return;
         }
