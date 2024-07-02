@@ -2,37 +2,23 @@ package com.xayah.feature.main.dashboard
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import com.xayah.core.ui.component.ActionButton
 import com.xayah.core.ui.component.AutoLabelLargeText
 import com.xayah.core.ui.component.BodyMediumText
-import com.xayah.core.ui.component.LabelLargeText
+import com.xayah.core.ui.component.OverviewCard
 import com.xayah.core.ui.component.SegmentProgressIndicator
 import com.xayah.core.ui.component.TitleLargeText
-import com.xayah.core.ui.component.intrinsicIcon
 import com.xayah.core.ui.component.paddingBottom
 import com.xayah.core.ui.component.paddingTop
 import com.xayah.core.ui.material3.toColor
@@ -47,63 +33,6 @@ import com.xayah.core.ui.util.fromStringId
 import com.xayah.core.ui.util.fromVector
 import com.xayah.core.ui.util.value
 import com.xayah.core.util.DateUtil
-
-@ExperimentalMaterial3Api
-@Composable
-fun OverviewCard(
-    title: StringResourceToken,
-    icon: ImageVectorToken,
-    colorContainer: ColorSchemeKeyTokens,
-    onColorContainer: ColorSchemeKeyTokens,
-    content: @Composable ColumnScope.() -> Unit,
-    actionIcon: ImageVectorToken,
-    onClick: () -> Unit = {},
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
-        colors = CardDefaults.cardColors(containerColor = colorContainer.toColor()),
-        onClick = onClick
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(SizeTokens.Level16)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(SizeTokens.Level16)
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier
-                        .paddingBottom(SizeTokens.Level8)
-                        .height(IntrinsicSize.Min),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(SizeTokens.Level6)
-                ) {
-                    Icon(
-                        modifier = Modifier.intrinsicIcon(),
-                        imageVector = icon.value,
-                        tint = onColorContainer.toColor(),
-                        contentDescription = null,
-                    )
-                    LabelLargeText(
-                        text = title.value,
-                        color = onColorContainer.toColor(),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                content()
-            }
-
-            Icon(
-                imageVector = actionIcon.value,
-                tint = onColorContainer.toColor(),
-                contentDescription = null
-            )
-        }
-    }
-}
 
 @SuppressLint("StringFormatInvalid")
 @ExperimentalMaterial3Api
@@ -188,7 +117,7 @@ fun OverviewLastBackupCard(nullBackupDir: Boolean, lastBackupTime: Long, onClick
                     color = ColorSchemeKeyTokens.OnSurfaceVariant.toColor(),
                 )
         },
-        actionIcon = ImageVectorToken.fromVector(Icons.Rounded.KeyboardArrowRight),
+        actionIcon = if (nullBackupDir) ImageVectorToken.fromVector(Icons.Rounded.KeyboardArrowRight) else null,
         onClick = onClick,
     )
 }
@@ -214,7 +143,14 @@ fun QuickActionsButton(
         colorContainer = colorContainer,
         colorL80D20 = colorL80D20,
         onColorContainer = onColorContainer,
-        actionIcon = actionIcon,
+        trailingIcon = {
+            if (actionIcon != null)
+                Icon(
+                    imageVector = actionIcon.value,
+                    tint = onColorContainer.toColor(enabled),
+                    contentDescription = null
+                )
+        },
         onClick = onClick
     ) {
         AutoLabelLargeText(modifier = Modifier.weight(1f), text = title.value, color = onColorContainer.toColor(enabled), enabled = enabled)

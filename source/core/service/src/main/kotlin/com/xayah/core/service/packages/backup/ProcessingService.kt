@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.RemoteException
 import com.xayah.core.service.model.BackupPreprocessing
+import com.xayah.core.util.NotificationUtil
 import com.xayah.core.util.withMainContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlin.coroutines.resume
@@ -62,9 +63,11 @@ abstract class ProcessingService {
     /**
      * Destroy the service.
      */
-    fun destroyService() {
+    fun destroyService(clearNotification: Boolean = false) {
+        if (clearNotification) NotificationUtil.cancel(context)
         if (mConnection != null)
             context.unbindService(mConnection!!)
+        mService?.stopSelf()
         mBinder = null
         mService = null
         mConnection = null
@@ -80,6 +83,8 @@ abstract class ProcessingService {
             mService!!
         }
     }
+
+    suspend fun initialize() = getService().initialize()
 
     suspend fun preprocessing() = getService().preprocessing()
 

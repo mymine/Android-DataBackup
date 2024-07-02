@@ -1,17 +1,30 @@
 package com.xayah.core.service.packages.backup
 
+import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
+import android.view.SurfaceControlHidden
 import com.xayah.core.data.repository.PackageRepository
 import com.xayah.core.data.repository.TaskRepository
 import com.xayah.core.database.dao.PackageDao
 import com.xayah.core.database.dao.TaskDao
+import com.xayah.core.datastore.readAutoScreenOff
+import com.xayah.core.datastore.readResetBackupList
+import com.xayah.core.datastore.readScreenOffTimeout
 import com.xayah.core.datastore.readSelectionType
+import com.xayah.core.datastore.saveLastBackupTime
+import com.xayah.core.datastore.saveScreenOffCountDown
+import com.xayah.core.datastore.saveScreenOffTimeout
+import com.xayah.core.model.DataType
 import com.xayah.core.model.OpType
+import com.xayah.core.model.OperationState
+import com.xayah.core.model.ProcessingType
 import com.xayah.core.model.TaskType
-import com.xayah.core.model.database.PackageEntity
+import com.xayah.core.model.database.Info
+import com.xayah.core.model.database.ProcessingInfoEntity
+import com.xayah.core.model.database.TaskDetailPackageEntity
 import com.xayah.core.model.database.TaskEntity
 import com.xayah.core.rootservice.service.RemoteRootService
 import com.xayah.core.rootservice.util.withIOContext
@@ -71,8 +84,91 @@ internal abstract class BackupService : Service() {
     internal var endTimestamp: Long = 0
     abstract val taskEntity: TaskEntity
 
+    private lateinit var prePreparationsEntity: ProcessingInfoEntity
+    private lateinit var postDataProcessingEntity: ProcessingInfoEntity
+    internal lateinit var postBackupItselfEntity: ProcessingInfoEntity
+    internal lateinit var postSaveIconsEntity: ProcessingInfoEntity
+    private val pkgEntities: MutableList<TaskDetailPackageEntity> = mutableListOf()
+
+    private var isInitialized: Boolean = false
+
+    @SuppressLint("StringFormatInvalid")
+    suspend fun initialize(): Long {
+        mutex.withLock {
+            if (rootService.getScreenOffTimeout() != Int.MAX_VALUE) {
+                context.saveScreenOffTimeout(rootService.getScreenOffTimeout())
+            }
+            if (isInitialized.not()) {
+                taskEntity.also {
+                    it.id = taskDao.upsert(it)
+                }
+                prePreparationsEntity = ProcessingInfoEntity(
+                    id = 0,
+                    taskId = taskEntity.id,
+                    title = context.getString(R.string.necessary_preparations),
+                    type = ProcessingType.PREPROCESSING,
+                ).apply {
+                    id = taskDao.upsert(this)
+                }
+                postDataProcessingEntity = ProcessingInfoEntity(
+                    id = 0,
+                    taskId = taskEntity.id,
+                    title = context.getString(R.string.necessary_remaining_data_processing),
+                    type = ProcessingType.POST_PROCESSING,
+                ).apply {
+                    id = taskDao.upsert(this)
+                }
+                postBackupItselfEntity = ProcessingInfoEntity(
+                    id = 0,
+                    taskId = taskEntity.id,
+                    title = context.getString(R.string.backup_itself),
+                    type = ProcessingType.POST_PROCESSING,
+                ).apply {
+                    id = taskDao.upsert(this)
+                }
+                postSaveIconsEntity = ProcessingInfoEntity(
+                    id = 0,
+                    taskId = taskEntity.id,
+                    title = context.getString(R.string.save_icons),
+                    type = ProcessingType.POST_PROCESSING,
+                ).apply {
+                    id = taskDao.upsert(this)
+                }
+
+                val packages = packageRepository.filterBackup(packageRepository.queryActivated(OpType.BACKUP))
+
+                packages.forEach { pkg ->
+                    pkgEntities.add(TaskDetailPackageEntity(
+                        id = 0,
+                        taskId = taskEntity.id,
+                        packageEntity = pkg,
+                        apkInfo = Info(title = context.getString(com.xayah.core.data.R.string.args_backup, DataType.PACKAGE_APK.type.uppercase())),
+                        userInfo = Info(title = context.getString(com.xayah.core.data.R.string.args_backup, DataType.PACKAGE_USER.type.uppercase())),
+                        userDeInfo = Info(title = context.getString(com.xayah.core.data.R.string.args_backup, DataType.PACKAGE_USER_DE.type.uppercase())),
+                        dataInfo = Info(title = context.getString(com.xayah.core.data.R.string.args_backup, DataType.PACKAGE_DATA.type.uppercase())),
+                        obbInfo = Info(title = context.getString(com.xayah.core.data.R.string.args_backup, DataType.PACKAGE_OBB.type.uppercase())),
+                        mediaInfo = Info(title = context.getString(com.xayah.core.data.R.string.args_backup, DataType.PACKAGE_MEDIA.type.uppercase())),
+                    ).apply {
+                        id = taskDao.upsert(this)
+                    })
+                }
+                isInitialized = true
+            }
+            return taskEntity.id
+        }
+    }
+
     suspend fun preprocessing(): BackupPreprocessing = withIOContext {
         mutex.withLock {
+            prePreparationsEntity.also {
+                it.state = OperationState.PROCESSING
+                taskDao.upsert(it)
+            }
+
+            if (context.readAutoScreenOff().first()) {
+                context.saveScreenOffCountDown(3)
+            }
+
             startTimestamp = DateUtil.getTimestamp()
 
             NotificationUtil.notify(context, notificationBuilder, context.getString(R.string.backing_up), context.getString(R.string.preprocessing))
@@ -93,12 +189,25 @@ internal abstract class BackupService : Service() {
             }
             log { "InputMethods: ${backupPreprocessing.inputMethods}." }
             log { "AccessibilityServices: ${backupPreprocessing.accessibilityServices}." }
+
+            runCatchingOnService { createTargetDirs() }
+
+            prePreparationsEntity.also {
+                it.state = OperationState.DONE
+                taskDao.upsert(it)
+            }
+
+            taskEntity.also {
+                it.processingIndex++
+                taskDao.upsert(it)
+            }
+
             backupPreprocessing
         }
     }
 
     abstract suspend fun createTargetDirs()
-    abstract suspend fun backupPackage(p: PackageEntity)
+    abstract suspend fun backupPackage(t: TaskDetailPackageEntity)
     abstract suspend fun backupItself()
     abstract suspend fun backupIcons()
     abstract suspend fun clear()
@@ -114,7 +223,6 @@ internal abstract class BackupService : Service() {
             log { "Processing is starting." }
             val selectionType = context.readSelectionType().first()
             log { "Selection: $selectionType." }
-            runCatchingOnService { createTargetDirs() }
 
             // createTargetDirs() before readStatFs().
             taskEntity.also {
@@ -122,32 +230,35 @@ internal abstract class BackupService : Service() {
                 it.rawBytes = taskRepository.getRawBytes(TaskType.PACKAGE)
                 it.availableBytes = taskRepository.getAvailableBytes(OpType.BACKUP)
                 it.totalBytes = taskRepository.getTotalBytes(OpType.BACKUP)
-                it.id = taskDao.upsert(it)
             }
 
-            val packages = packageDao.queryActivated()
-            log { "Task count: ${packages.size}." }
+            log { "Task count: ${pkgEntities.size}." }
             taskEntity.also {
-                it.totalCount = packages.size
+                it.totalCount = pkgEntities.size
                 taskDao.upsert(it)
             }
 
-            packages.forEachIndexed { index, currentPackage ->
+            pkgEntities.forEachIndexed { index, pkg ->
                 NotificationUtil.notify(
                     context,
                     notificationBuilder,
                     context.getString(R.string.backing_up),
-                    currentPackage.packageInfo.label,
-                    packages.size,
+                    pkg.packageEntity.packageInfo.label,
+                    pkgEntities.size,
                     index
                 )
-                log { "Current package: $currentPackage" }
+                log { "Current package: ${pkg.packageEntity}" }
 
                 // Kill the package.
-                log { "Trying to kill ${currentPackage.packageName}." }
-                BaseUtil.killPackage(userId = currentPackage.userId, packageName = currentPackage.packageName)
+                log { "Trying to kill ${pkg.packageEntity.packageName}." }
+                BaseUtil.killPackage(context = context, userId = pkg.packageEntity.userId, packageName = pkg.packageEntity.packageName)
 
-                runCatchingOnService { backupPackage(currentPackage) }
+                runCatchingOnService { backupPackage(pkg) }
+
+                taskEntity.also {
+                    it.processingIndex++
+                    taskDao.upsert(it)
+                }
             }
         }
     }
@@ -163,6 +274,11 @@ internal abstract class BackupService : Service() {
             )
             log { "PostProcessing is starting." }
 
+            postDataProcessingEntity.also {
+                it.state = OperationState.PROCESSING
+                taskDao.upsert(it)
+            }
+
             // Restore keyboard and services.
             if (backupPreprocessing.inputMethods.isNotEmpty()) {
                 PreparationUtil.setInputMethods(inputMethods = backupPreprocessing.inputMethods)
@@ -177,11 +293,16 @@ internal abstract class BackupService : Service() {
                 log { "AccessibilityServices is empty, skip restoring." }
             }
 
+            postDataProcessingEntity.also {
+                it.state = OperationState.DONE
+                taskDao.upsert(it)
+            }
+
             runCatchingOnService { backupItself() }
             runCatchingOnService { backupIcons() }
             runCatchingOnService { clear() }
 
-            packageDao.clearActivated()
+            if (context.readResetBackupList().first()) packageDao.clearActivated()
             endTimestamp = DateUtil.getTimestamp()
             taskEntity.also {
                 it.endTimestamp = endTimestamp
@@ -189,6 +310,7 @@ internal abstract class BackupService : Service() {
                 taskDao.upsert(it)
             }
             val time = DateUtil.getShortRelativeTimeSpanString(context = context, time1 = startTimestamp, time2 = endTimestamp)
+            context.saveLastBackupTime(endTimestamp)
             NotificationUtil.notify(
                 context,
                 notificationBuilder,
@@ -196,6 +318,14 @@ internal abstract class BackupService : Service() {
                 "${time}, ${taskEntity.successCount} ${context.getString(R.string.succeed)}, ${taskEntity.failureCount} ${context.getString(R.string.failed)}",
                 ongoing = false
             )
+
+            taskEntity.also {
+                it.processingIndex++
+                taskDao.upsert(it)
+            }
+
+            rootService.setScreenOffTimeout(context.readScreenOffTimeout().first())
+            rootService.setDisplayPowerMode(SurfaceControlHidden.POWER_MODE_NORMAL)
         }
     }
 }

@@ -11,7 +11,7 @@ interface IRemoteRootService {
     boolean exists(String path);
     boolean createNewFile(String path);
     boolean deleteRecursively(String path);
-    List<String> listFilePaths(String path);
+    List<String> listFilePaths(String path, boolean listFiles, boolean listDirs);
     ParcelFileDescriptor readText(String path);
     ParcelFileDescriptor readBytes(String path);
     long calculateSize(String path);
@@ -34,6 +34,9 @@ interface IRemoteRootService {
     PackageInfo getPackageArchiveInfo(String path);
     String getPackageSsaidAsUser(String packageName, int uid, int userId);
     void setPackageSsaidAsUser(String packageName, int uid, int userId, String ssaid);
+    void setDisplayPowerMode(int mode);
+    int getScreenOffTimeout();
+    void setScreenOffTimeout(int timeout);
 
     String calculateMD5(String src);
 }

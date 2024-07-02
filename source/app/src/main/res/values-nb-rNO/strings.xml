@@ -40,7 +40,6 @@
     <string name="sooner_or_later">Før eller siden</string>
     <string name="clean_restoring">Fersk gjenoppretting</string>
     <string name="restoring">Gjenoppretter …</string>
-    <string name="restore_user_desc">Målbruker under innlasting av gjenopprettingsliste eller gjenoppretting</string>
     <string name="select_target_directory">Velg målmappe</string>
     <string name="prompt">Spørring</string>
     <string name="password">Passord</string>
@@ -65,7 +64,6 @@
     <string name="manifest">Manifest</string>
     <string name="search_bar_hint_packages">Søk etter navn eller pakke …</string>
     <string name="export">Eksporter</string>
-    <string name="confirm_delete">Slett\?</string>
     <string name="restore_completed">Gjenopprettet</string>
     <string name="media_target_path_missing">Målmappen mangler. Velg den manuelt.</string>
     <string name="port">Port</string>
@@ -88,7 +86,6 @@
     <string name="structure">Struktur</string>
     <string name="backup">Sikkerhetskopi</string>
     <string name="processing_exit_confirmation">Avslutt programmet og forstyrr pågående operasjon\?</string>
-    <string name="monet_desc">Draktmotor for Materiell Deig</string>
     <string name="updating">Oppdaterer …</string>
     <string name="application_desc">Henting av pakkeinfo, brukt til generering av sikkerhetskopieringsliste og innhenting av programdatastørrelse</string>
     <string name="custom_storage">Egendefinert lagring</string>
@@ -139,13 +136,11 @@
     <string name="edit">Rediger</string>
     <string name="follow_symlinks_desc">Arkiver og dump filene de peker til</string>
     <string name="data_size">Datastørrelse</string>
-    <string name="third_party">Tredjepart</string>
     <string name="mount">Monter</string>
     <string name="selected">Valgt</string>
     <string name="set_local">Sett som lokal</string>
     <string name="not_selected">Ikke valgt</string>
     <string name="cloud_server_disconnected">Skytjener frakoblet</string>
-    <string name="alphabet">Alfabet</string>
     <string name="main_account">Hovedkonto</string>
     <string name="original_data_size">Datastørrelse (opprinnelig)</string>
     <string name="unmount">Avmonter</string>

@@ -12,6 +12,7 @@ import android.os.Parcel
 import android.os.ParcelFileDescriptor
 import android.os.RemoteException
 import android.os.UserHandle
+import com.google.gson.reflect.TypeToken
 import com.topjohnwu.superuser.ipc.RootService
 import com.xayah.core.rootservice.IRemoteRootService
 import com.xayah.core.rootservice.impl.RemoteRootServiceImpl
@@ -19,6 +20,7 @@ import com.xayah.core.rootservice.parcelables.PathParcelable
 import com.xayah.core.rootservice.parcelables.StatFsParcelable
 import com.xayah.core.rootservice.util.ExceptionUtil.tryOnScope
 import com.xayah.core.rootservice.util.withMainContext
+import com.xayah.core.util.GsonUtil
 import com.xayah.core.util.LogUtil
 import com.xayah.core.util.PathUtil
 import com.xayah.core.util.model.ShellResult
@@ -42,6 +44,7 @@ class RemoteRootService(private val context: Context) {
             component = ComponentName(context.packageName, RemoteRootService::class.java.name)
         }
     }
+    val gsonUtil by lazy { GsonUtil() }
 
     // TODO: Will this cause memory leak? It needs to test.
     var onFailure: (Throwable) -> Unit = {}
@@ -155,15 +158,15 @@ class RemoteRootService(private val context: Context) {
 
     suspend fun renameTo(src: String, dst: String): Boolean = runCatching { getService().renameTo(src, dst) }.onFailure(onFailure).getOrElse { false }
 
-    suspend fun writeText(text: String, path: String, context: Context): Boolean = runCatching {
-        var state = true
+    suspend fun writeText(text: String, dst: String): Boolean = runCatching {
+        var isSuccess = true
         val tmpFilePath = "${context.cacheDir.path}/tmp"
         val tmpFile = File(tmpFilePath)
         tmpFile.writeText(text)
-        if (getService().mkdirs(path).not()) state = false
-        if (getService().copyTo(tmpFilePath, path, true).not()) state = false
+        if (getService().mkdirs(PathUtil.getParentPath(dst)).not()) isSuccess = false
+        if (getService().copyTo(tmpFilePath, dst, true).not()) isSuccess = false
         tmpFile.deleteRecursively()
-        state
+        isSuccess
     }.onFailure(onFailure).getOrElse { false }
 
     suspend fun writeBytes(bytes: ByteArray, dst: String): Boolean = runCatching {
@@ -183,7 +186,8 @@ class RemoteRootService(private val context: Context) {
 
     suspend fun deleteRecursively(path: String): Boolean = runCatching { getService().deleteRecursively(path) }.onFailure(onFailure).getOrElse { false }
 
-    suspend fun listFilePaths(path: String): List<String> = runCatching { getService().listFilePaths(path) }.onFailure(onFailure).getOrElse { listOf() }
+    suspend fun listFilePaths(path: String, listFiles: Boolean = true, listDirs: Boolean = true): List<String> =
+        runCatching { getService().listFilePaths(path, listFiles, listDirs) }.onFailure(onFailure).getOrElse { listOf() }
 
     private fun readFromParcel(pfd: ParcelFileDescriptor, onRead: (Parcel) -> Unit) = run {
         val stream = ParcelFileDescriptor.AutoCloseInputStream(pfd)
@@ -280,8 +284,39 @@ class RemoteRootService(private val context: Context) {
     suspend fun setPackageSsaidAsUser(packageName: String, uid: Int, userId: Int, ssaid: String) =
         runCatching { getService().setPackageSsaidAsUser(packageName, uid, userId, ssaid) }.onFailure(onFailure)
 
+    suspend fun setDisplayPowerMode(mode: Int) =
+        runCatching { getService().setDisplayPowerMode(mode) }.onFailure(onFailure)
+
+    suspend fun getScreenOffTimeout() =
+        runCatching { getService().getScreenOffTimeout() }.onFailure(onFailure).getOrElse { 0 }
+
+    suspend fun setScreenOffTimeout(timeout: Int) =
+        runCatching { getService().setScreenOffTimeout(timeout) }.onFailure(onFailure)
+
     suspend fun calculateMD5(src: String): String? =
         runCatching { getService().calculateMD5(src) }.onFailure(onFailure).getOrNull()
+
+    suspend fun writeJson(data: Any, dst: String): ShellResult = runCatching {
+        var isSuccess: Boolean
+        val out = mutableListOf<String>()
+
+        writeText(text = gsonUtil.toJson(data), dst = dst).also {
+            isSuccess = it
+            if (isSuccess) {
+                out.add("Succeed to write configs: $dst")
+            } else {
+                out.add("Failed to write configs: $dst")
+            }
+        }
+        setAllPermissions(src = dst)
+
+        ShellResult(code = if (isSuccess) 0 else -1, input = listOf(), out = out)
+    }.onFailure(onFailure).getOrElse { ShellResult(code = -1, input = listOf(), out = listOf()) }
+
+    suspend inline fun <reified T> readJson(src: String): T? = runCatching<T?> {
+        val json = readText(path = src)
+        gsonUtil.fromJson<T>(json, object : TypeToken<T>() {}.type)
+    }.onFailure(onFailure).getOrNull()
 
     @OptIn(ExperimentalSerializationApi::class)
     suspend inline fun <reified T> writeProtoBuf(data: T, dst: String): ShellResult = runCatching {

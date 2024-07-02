@@ -146,13 +146,15 @@ internal fun ColorScheme.fromToken(value: ColorSchemeKeyTokens): Color {
         ColorSchemeKeyTokens.SurfaceContainerLowBaselineFixed -> if (isDarkTheme) BaselineTonalPalette.neutral10 else BaselineTonalPalette.neutral96
         ColorSchemeKeyTokens.SurfaceContainerLowestBaselineFixed -> if (isDarkTheme) BaselineTonalPalette.neutral4 else BaselineTonalPalette.neutral100
         ColorSchemeKeyTokens.SurfaceDimBaselineFixed -> if (isDarkTheme) BaselineTonalPalette.neutral6 else BaselineTonalPalette.neutral87
+
+        ColorSchemeKeyTokens.SurfaceVariantDim -> if (isDarkTheme) tonalPalette.neutral20 else tonalPalette.neutral95
     }
 }
 
 /**
  * A low level of alpha used to represent disabled components, such as text in a disabled Button.
  */
-internal const val DisabledAlpha = 0.38f
+const val DisabledAlpha = 0.38f
 
 /** Converts a color token key to the local color scheme provided by the theme */
 @Composable

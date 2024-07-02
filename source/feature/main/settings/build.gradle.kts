@@ -14,6 +14,9 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:datastore"))
     implementation(project(":core:model"))
+    implementation(project(":core:data"))
+    implementation(project(":core:util"))
+    implementation(project(":core:rootservice"))
     implementation(project(":feature:setup"))
 
     // Compose Navigation
@@ -22,4 +25,16 @@ dependencies {
 
     // Preferences DataStore
     implementation(libs.androidx.datastore.preferences)
+
+    // dotLottie
+    implementation(libs.dotlottie.android)
+
+    // PickYou
+    implementation(libs.pickyou)
+
+    // Gson
+    implementation(libs.gson)
+
+    // Coil
+    implementation(libs.coil.compose)
 }

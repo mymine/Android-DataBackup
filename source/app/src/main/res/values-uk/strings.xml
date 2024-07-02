@@ -82,7 +82,6 @@
     <string name="monet">Монет</string>
     <string name="keep_screen_on">Не вимикати екран</string>
     <string name="processing_exit_confirmation">Вийти з додатку і перервати поточну роботу\?</string>
-    <string name="monet_desc">Движок тем Material You</string>
     <string name="reload">Перезавантажити</string>
     <string name="feature">Функції</string>
     <string name="unmount">Розмонтувати</string>
@@ -96,7 +95,6 @@
     <string name="sooner_or_later">Раніше чи пізніше</string>
     <string name="clean_restoring">Чисте відновлення</string>
     <string name="installation_time">Час встановлення</string>
-    <string name="restore_user_desc">Цільовий користувач під час завантаження списку відновлення або відновлення</string>
     <string name="select_target_directory">Вибір цільової папки</string>
     <string name="password">Пароль</string>
     <string name="user">Користувач</string>
@@ -110,7 +108,6 @@
     <string name="reset_backup_list">Перезапустити список бекапу</string>
     <string name="this_version_only_supports_but_your_device_is_please_install_version">Ця версія підтримує лише версію %1$s, але ваш пристрій має %2$s. Установіть %3$s або вище.</string>
     <string name="edit">Редагувати</string>
-    <string name="confirm_delete">Видалити\?</string>
     <string name="restore_completed">Відновлення завершено</string>
     <string name="media_target_path_missing">Відсутня цільова папка, встановіть її вручну.</string>
     <string name="update_available">Доступне оновлення</string>
@@ -118,7 +115,6 @@
     <string name="name">Ім’я</string>
     <string name="username">Ім\'я користувача</string>
     <string name="data_size">Розмір даних</string>
-    <string name="third_party">Користувацькі</string>
     <string name="restore_user">Відновлення користувача</string>
     <string name="delete">Видалення</string>
     <string name="media_set_path">Вказати шлях</string>
@@ -128,7 +124,6 @@
     <string name="cloud_server_disconnected">Хмарний сервер відключено</string>
     <string name="account">Обліковий запис</string>
     <string name="clean_restoring_desc">Очистка цільової директорії перед відновленням</string>
-    <string name="alphabet">За абеткою</string>
     <string name="reset_backup_list_desc">Зняти виділення після бекапу</string>
     <string name="main_account">Основний обліковий запис</string>
     <string name="backup">Бекап</string>
